@@ -90,28 +90,74 @@ timer_read_time(void)
     return timespec_to_time(timespec_read());
 }
 
+static sigset_t ss_alarm, ss_sleep;
+static timer_t t_alarm;
+
 // Activate timer dispatch as soon as possible
 void
 timer_kick(void)
 {
-    next_wake_time = timespec_read();
+    struct itimerspec it;
+    it.it_interval = (struct timespec){0, 0};
+    next_wake_time = it.it_value = timespec_read();
     next_wake_time_counter = timespec_to_time(next_wake_time);
+    timer_settime(t_alarm, TIMER_ABSTIME, &it, NULL);
 }
 
 // Invoke timers
 static void
-timer_dispatch(void)
+timer_dispatch(int signal)
 {
     uint32_t next = timer_dispatch_many();
-    next_wake_time = timespec_from_time(next);
+    struct itimerspec it;
+    it.it_interval = (struct timespec){0, 0};
+    next_wake_time = it.it_value = timespec_from_time(next);
     next_wake_time_counter = next;
+    timer_settime(t_alarm, TIMER_ABSTIME, &it, NULL);
 }
 
 void
 timer_init(void)
 {
+    // Initialize ss_alarm signal set
+    int ret = sigemptyset(&ss_alarm);
+    if (ret < 0) {
+        report_errno("sigemptyset", ret);
+        return;
+    }
+    ret = sigaddset(&ss_alarm, SIGALRM);
+    if (ret < 0) {
+        report_errno("sigaddset", ret);
+        return;
+    }
+    // Initialize ss_sleep signal set
+    ret = sigprocmask(0, NULL, &ss_sleep);
+    if (ret < 0) {
+        report_errno("sigprocmask ss_sleep", ret);
+        return;
+    }
+    ret = sigdelset(&ss_sleep, SIGALRM);
+    if (ret < 0) {
+        report_errno("sigdelset", ret);
+        return;
+    }
+    // Initialize t_alarm signal based timer
+    ret = timer_create(CLOCK_MONOTONIC, NULL, &t_alarm);
+    if (ret < 0) {
+        report_errno("timer_create", ret);
+        return;
+    }
+    irq_disable();
+    struct sigaction act = { .sa_handler = timer_dispatch, .sa_mask = ss_alarm,
+                             .sa_flags = SA_RESTART };
+    ret = sigaction(SIGALRM, &act, NULL);
+    if (ret < 0) {
+        report_errno("sigaction", ret);
+        return;
+    }
     start_sec = timespec_read().tv_sec + 1;
     timer_kick();
+    irq_enable();
 }
 DECL_INIT(timer_init);
 
@@ -123,33 +169,36 @@ DECL_INIT(timer_init);
 void
 irq_disable(void)
 {
+    sigprocmask(SIG_BLOCK, &ss_alarm, NULL);
 }
 
 void
 irq_enable(void)
 {
+    sigprocmask(SIG_UNBLOCK, &ss_alarm, NULL);
 }
 
 irqstatus_t
 irq_save(void)
 {
-    return 0;
+    sigset_t old;
+    sigprocmask(SIG_BLOCK, &ss_alarm, &old);
+    return old;
 }
 
 void
 irq_restore(irqstatus_t flag)
 {
+    sigprocmask(SIG_SETMASK, &flag, NULL);
 }
 
 void
 irq_wait(void)
 {
-    console_sleep(next_wake_time);
+    console_sleep(&ss_sleep);
 }
 
 void
 irq_poll(void)
 {
-    if (!timespec_is_before(timespec_read(), next_wake_time))
-        timer_dispatch();
 }

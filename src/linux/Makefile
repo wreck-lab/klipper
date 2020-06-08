@@ -7,7 +7,7 @@ src-y += linux/pca9685.c linux/spidev.c linux/analog.c linux/hard_pwm.c
 src-y += linux/i2c.c linux/gpio.c generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/timer_irq.c
 
-CFLAGS_klipper.elf += -lutil
+CFLAGS_klipper.elf += -lutil -lrt
 
 flash: $(OUT)klipper.elf
 	@echo "  Flashing"
