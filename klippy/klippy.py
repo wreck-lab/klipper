@@ -143,12 +143,18 @@ class Printer:
         pconfig.check_unused_options(config)
     def _connect(self, eventtime):
         try:
+            logging.info("1")
             self._read_config()
+            logging.info("2")
             self.send_event("klippy:mcu_identify")
+            logging.info("2a")
             for cb in self.event_handlers.get("klippy:connect", []):
+                logging.info("3")
                 if self.state_message is not message_startup:
                     return
+                logging.info("4")
                 cb()
+                logging.info("5")
         except (self.config_error, pins.error) as e:
             logging.exception("Config error")
             self._set_state("%s%s" % (str(e), message_restart))
@@ -169,15 +175,21 @@ class Printer:
                             % (str(e), message_restart,))
             return
         try:
+            logging.info("6")
             self._set_state(message_ready)
+            logging.info("7")
             for cb in self.event_handlers.get("klippy:ready", []):
+                logging.info("8")
                 if self.state_message is not message_ready:
                     return
+                logging.info("9")
                 cb()
+            logging.info("10")
         except Exception as e:
             logging.exception("Unhandled exception during ready callback")
             self.invoke_shutdown("Internal error during ready callback: %s"
                                  % (str(e),))
+        logging.info("11")
     def run(self):
         systime = time.time()
         monotime = self.reactor.monotonic()

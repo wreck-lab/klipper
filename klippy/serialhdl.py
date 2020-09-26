@@ -125,11 +125,15 @@ class SerialReader:
             self.ffi_lib.serialqueue_set_receive_window(
                 self.serialqueue, receive_window)
     def connect_file(self, debugoutput, dictionary, pace=False):
+        logging.info("s1")
         self.ser = debugoutput
+        logging.info("s2")
         self.msgparser.process_identify(dictionary, decompress=False)
+        logging.info("s3")
         self.serialqueue = self.ffi_main.gc(
             self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 1),
             self.ffi_lib.serialqueue_free)
+        logging.info("s4")
     def set_clock_est(self, freq, last_time, last_clock):
         self.ffi_lib.serialqueue_set_clock_est(
             self.serialqueue, freq, last_time, last_clock)

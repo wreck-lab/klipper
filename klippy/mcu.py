@@ -486,7 +486,9 @@ class MCU:
         raise error("Attempt MCU '%s' restart failed" % (self._name,))
     def _connect_file(self, pace=False):
         # In a debugging mode.  Open debug output file and read data dictionary
+        logging.info("d1")
         start_args = self._printer.get_start_args()
+        logging.info("d2")
         if self._name == 'mcu':
             out_fname = start_args.get('debugoutput')
             dict_fname = start_args.get('dictionary')
@@ -497,8 +499,11 @@ class MCU:
         dfile = open(dict_fname, 'rb')
         dict_data = dfile.read()
         dfile.close()
+        logging.info("d3")
         self._serial.connect_file(outfile, dict_data)
+        logging.info("d4")
         self._clocksync.connect_file(self._serial, pace)
+        logging.info("d5")
         # Handle pacing
         if not pace:
             def dummy_estimated_print_time(eventtime):
@@ -594,8 +599,11 @@ class MCU:
         log_info = self._log_info() + "\n" + move_msg
         self._printer.set_rollover_info(self._name, log_info, log=False)
     def _mcu_identify(self):
+        logging.info("m1")
         if self.is_fileoutput():
+            logging.info("m2")
             self._connect_file()
+            logging.info("m3")
         else:
             if (self._restart_method == 'rpi_usb'
                 and not os.path.exists(self._serialport)):

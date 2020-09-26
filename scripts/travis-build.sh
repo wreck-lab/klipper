@@ -64,5 +64,5 @@ done
 ######################################################################
 
 start_test klippy "Test invoke klippy"
-$PYTHON scripts/test_klippy.py -d ${DICTDIR} test/klippy/*.test
+$PYTHON scripts/test_klippy.py -d ${DICTDIR} test/klippy/*.test -v
 finish_test klippy "Test invoke klippy"
