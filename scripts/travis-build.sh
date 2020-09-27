@@ -63,6 +63,6 @@ done
 # Verify klippy host software
 ######################################################################
 
-start_test klippy "Test invoke klippy"
-$PYTHON scripts/test_klippy.py -d ${DICTDIR} test/klippy/*.test -v
-finish_test klippy "Test invoke klippy"
+#start_test klippy "Test invoke klippy"
+#$PYTHON scripts/test_klippy.py -d ${DICTDIR} test/klippy/*.test -v
+#finish_test klippy "Test invoke klippy"
