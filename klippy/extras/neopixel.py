@@ -60,6 +60,7 @@ class PrinterNeoPixel:
         red = int(red * 255. + .5)
         blue = int(blue * 255. + .5)
         green = int(green * 255. + .5)
+        white = int(white * 255. + .5)
         if self.color_order == "GRB":
             color_data = [green, red, blue]
         elif self.color_order == "RGB":
