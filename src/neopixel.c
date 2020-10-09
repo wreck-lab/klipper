@@ -87,14 +87,17 @@ struct neopixel_s {
     struct gpio_out pin;
     neopixel_time_t bit_max_ticks;
     uint32_t last_req_time, reset_min_ticks;
-    uint8_t data_size, data[0];
+    uint16_t data_size;
+    uint8_t data[0];
 };
 
 void
 command_config_neopixel(uint32_t *args)
 {
     struct gpio_out pin = gpio_out_setup(args[1], 0);
-    uint8_t data_size = args[2];
+    uint16_t data_size = args[2];
+    if (data_size & 0x8000)
+        shutdown("Invalid neopixel data_size");
     struct neopixel_s *n = oid_alloc(args[0], command_config_neopixel
                                      , sizeof(*n) + data_size);
     n->pin = pin;
@@ -103,7 +106,7 @@ command_config_neopixel(uint32_t *args)
     n->reset_min_ticks = args[4];
 }
 DECL_COMMAND(command_config_neopixel, "config_neopixel oid=%c pin=%u"
-             " data_size=%c bit_max_ticks=%u reset_min_ticks=%u");
+             " data_size=%hu bit_max_ticks=%u reset_min_ticks=%u");
 
 static uint_fast8_t
 send_data(struct neopixel_s *n)
@@ -118,7 +121,7 @@ send_data(struct neopixel_s *n)
 
     // Transmit data
     uint8_t *data = n->data;
-    uint_fast8_t data_len = n->data_size;
+    uint_fast16_t data_len = n->data_size;
     struct gpio_out pin = n->pin;
     neopixel_time_t last_start = neopixel_get_time();
     neopixel_time_t bit_max_ticks = n->bit_max_ticks;
@@ -176,13 +179,15 @@ command_neopixel_update(uint32_t *args)
 {
     uint8_t oid = args[0];
     struct neopixel_s *n = oid_lookup(oid, command_config_neopixel);
-    uint_fast8_t pos = args[1], data_len = args[2];
+    uint_fast16_t pos = args[1];
+    uint_fast8_t data_len = args[2];
     uint8_t *data = (void*)(size_t)args[3];
-    if (pos + data_len > n->data_size)
+    if (pos & 0x8000 || pos + data_len > n->data_size)
         shutdown("Invalid neopixel update command");
     memcpy(&n->data[pos], data, data_len);
 }
-DECL_COMMAND(command_neopixel_update, "neopixel_update oid=%c pos=%c data=%*s");
+DECL_COMMAND(command_neopixel_update,
+             "neopixel_update oid=%c pos=%hu data=%*s");
 
 void
 command_neopixel_send(uint32_t *args)

@@ -10,6 +10,8 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 BIT_MAX_TIME=.000004
 RESET_MIN_TIME=.000050
 
+MAX_MCU_SIZE = 500  # Sanity check on LED chain length
+
 class PrinterNeoPixel:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -24,8 +26,8 @@ class PrinterNeoPixel:
         formats = {v: v for v in ["RGB", "GRB", "RGBW"]}
         self.color_order = config.getchoice("color_order", formats)
         elem_size = len(self.color_order)
-        self.chain_count = config.getint('chain_count', 1,
-                                         minval=1, maxval=255//elem_size)
+        self.chain_count = config.getint('chain_count', 1, minval=1,
+                                         maxval=MAX_MCU_SIZE//elem_size)
         self.neopixel_update_cmd = self.neopixel_send_cmd = None
         # Initial color
         self.color_data = bytearray(self.chain_count * elem_size)
@@ -51,7 +53,7 @@ class PrinterNeoPixel:
                                    bmt, rmt))
         cmd_queue = self.mcu.alloc_command_queue()
         self.neopixel_update_cmd = self.mcu.lookup_command(
-            "neopixel_update oid=%c pos=%c data=%*s", cq=cmd_queue)
+            "neopixel_update oid=%c pos=%hu data=%*s", cq=cmd_queue)
         self.neopixel_send_cmd = self.mcu.lookup_query_command(
             "neopixel_send oid=%c", "neopixel_result success=%c", cq=cmd_queue)
     def update_color_data(self, red, green, blue, white, index=None):
