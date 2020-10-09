@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+202010??: The neopixel `color_order_GRB` config option has been
+removed. If necessary, update the config to set the new `color_order`
+option to RGB, BRG, or RGBW.
+
 20200902: The RTD resistance-to-temperature calculation for MAX31865
 converters has been corrected to not read low.  If you are using such a
 device, you should recalibrate your print temperature and PID settings.
