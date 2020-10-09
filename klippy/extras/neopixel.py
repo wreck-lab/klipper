@@ -23,7 +23,7 @@ class PrinterNeoPixel:
         self.oid = self.mcu.create_oid()
         self.pin = pin_params['pin']
         self.mcu.register_config_callback(self.build_config)
-        formats = {v: v for v in ["RGB", "GRB", "RGBW"]}
+        formats = {v: v for v in ["RGB", "GRB", "RGBW", "GRBW"]}
         self.color_order = config.getchoice("color_order", formats)
         elem_size = len(self.color_order)
         self.chain_count = config.getint('chain_count', 1, minval=1,
@@ -35,7 +35,7 @@ class PrinterNeoPixel:
         green = config.getfloat('initial_GREEN', 0., minval=0., maxval=1.)
         blue = config.getfloat('initial_BLUE', 0., minval=0., maxval=1.)
         white = 0
-        if self.color_order == "RGBW":
+        if elem_size == 4:
             white = config.getfloat('initial_WHITE', 0., minval=0., maxval=1.)
         self.update_color_data(red, green, blue, white)
         self.old_color_data = bytearray([d ^ 1 for d in self.color_data])
@@ -65,6 +65,8 @@ class PrinterNeoPixel:
             color_data = [green, red, blue]
         elif self.color_order == "RGB":
             color_data = [red, green, blue]
+        elif self.color_order == "GRBW":
+            color_data = [green, red, blue, white]
         else:
             color_data = [red, green, blue, white]
         if index is None:
